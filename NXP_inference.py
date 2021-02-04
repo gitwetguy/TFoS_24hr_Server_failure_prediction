@@ -73,7 +73,7 @@ if __name__ == '__main__':
   print("args:", args)
 
   mem_data = spark.read.csv(ATKH_mem_used_csv_path,inferSchema=True, header=True)
-  mem_data = mem_data.head(960)
+  mem_data = mem_data.head(3600)
   mem_data = spark.createDataFrame(mem_data)
   mem_data.show(60)
 
