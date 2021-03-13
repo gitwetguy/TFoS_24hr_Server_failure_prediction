@@ -96,9 +96,13 @@ if __name__ == '__main__':
   output_dir = datetime.datetime.now().strftime('%Y%m%d%H%M%S-prediction')
   tf.io.gfile.makedirs(ATKH_mem_used_output_path+"/"+output_dir)
   print("=======output_path : "+ATKH_mem_used_output_path+"/"+output_dir)
-  preds.write.json(ATKH_mem_used_output_path+"/"+output_dir)
+  preds.write.json(ATKH_mem_used_output_path+"/"+output_dir,mode='append')
   result_json = spark.read.json(ATKH_mem_used_output_path+"/"+output_dir+"/*.json")
-  result_json.show()
+  print("================result1212121212112121 : {}".format(result_json.collect()))
+  with open('test.txt', 'w') as f:
+    for item in result_json.collect():
+        f.write("%s\n" % item)
+
   #preds.write.json("predictions_res")
   #preds.write.json()
 
