@@ -102,6 +102,7 @@ if __name__ == '__main__':
   #preds.write.json("predictions_res")
   #preds.write.json()
 
+
   #preds.write.format('json').save(ATKH_mem_used_output_path+"/"+output_dir)
 
  
