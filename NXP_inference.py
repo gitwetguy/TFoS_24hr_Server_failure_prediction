@@ -77,7 +77,7 @@ if __name__ == '__main__':
   print("args:", args)
 
   mem_data = spark.read.csv(ATKH_mem_used_csv_path,inferSchema=True, header=True)
-  mem_data = mem_data.head(480)
+  mem_data = mem_data.head(4800)
   mem_data = spark.createDataFrame(mem_data)
   mem_data.show(60)
 
@@ -98,8 +98,8 @@ if __name__ == '__main__':
   print("=======output_path : "+ATKH_mem_used_output_path+"/"+output_dir)
   preds.write.json(ATKH_mem_used_output_path+"/"+output_dir,mode='append')
   result_json = spark.read.json(ATKH_mem_used_output_path+"/"+output_dir+"/*.json")
-  print("================result1212121212112121 : {}".format(result_json.collect()))
-  with open('test.txt', 'w') as f:
+  
+  with open('predictions/'+output_dir+'.txt', 'w') as f:
     for item in result_json.collect():
         f.write("%s\n" % item)
 

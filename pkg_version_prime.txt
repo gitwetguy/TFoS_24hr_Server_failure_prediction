@@ -1,0 +1,15 @@
+Package                            Version
+---------------------------------- -------------------
+h5py                               2.10.0
+numpy                              1.19.2
+pip                                20.3.3
+pyspark                            2.4.3
+tensorboard                        2.4.0
+tensorboard-plugin-wit             1.7.0
+tensorflow                         2.4.0
+tensorflow-datasets                4.2.0
+tensorflow-estimator               2.4.0
+tensorflow-metadata                0.26.0
+tensorflowonspark                  2.2.2
+Python                             3.7.9
+Spark                              2.4.7
