@@ -7,21 +7,25 @@ import numpy as np
 import tensorflow as tf
 import datetime
 
+import argparse
+from pyspark.context import SparkContext
+from pyspark.conf import SparkConf
+from tensorflowonspark import TFParallel
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import udf
+from pyspark.sql.types import IntegerType
+from tensorflowonspark import dfutil
+from tensorflowonspark.pipeline import TFEstimator, TFModel
+
 ATKH_mem_used_csv_path = "hdfs://master:9000/user/data/ATKH_Oplus_TWGKHHPSK1MSB04_memory_usage_2020_10.csv"
 ATKH_mem_used_model_path = "/usr/local/TensorFlowOnSpark/Zabbix_24hr_prediction/TFoS_24hr_Server_failure_prediction/Zabbix"
+#ATKH_mem_used_model_path = "hdfs://master:9000/user/data/Zabbix"
 ATKH_mem_used_output_path = "/usr/local/TensorFlowOnSpark/Zabbix_24hr_prediction/TFoS_24hr_Server_failure_prediction/predictions"
 
 def inference(args, ctx):
     
-
-    print("\n====NOW IN inference FUNCTION!!!!=======\n")
-    #saved_model = tf.saved_model.load(ATKH_mem_used_model_path, tags='serve')
-    #predict = saved_model.signatures['serving_default']
-    #output_dir = datetime.datetime.now().strftime('%Y%m%d%H%M%S-prediction')
-    #tf.io.gfile.makedirs(output_dir)
-    #create a file
-    #output_file = tf.io.gfile.GFile("{}/part-{:05d}".format(output_dir, ctx.worker_num), mode='w')
-    #output_file.write(str(predict)+"===test")
+  print("inference")
+    
 
     
 
@@ -43,7 +47,7 @@ if __name__ == '__main__':
   nxp_spark_conf.setAppName("NXP_inference")
   nxp_spark_conf.set('spark.executor.memory', '4g')
   nxp_spark_conf.set('spark.executor.cores', 4)
-  nxp_spark_conf.set('spark.executor.instances',1)
+  nxp_spark_conf.set('spark.executor.instances',2)
   sc = SparkContext(conf=nxp_spark_conf)
   spark = SparkSession(sc)
   executors = sc._conf.get("spark.executor.instances")
@@ -67,13 +71,13 @@ if __name__ == '__main__':
   parser.add_argument("--mode", help="train|inference", choices=["train", "inference"], default="inference")
   parser.add_argument("--model_dir", help="path to save checkpoint", default=ATKH_mem_used_model_path)
   parser.add_argument("--export_dir", help="path to export saved_model", default=ATKH_mem_used_model_path)
-  parser.add_argument("--output", help="HDFS path to save predictions", type=str, default="/usr/local/TensorFlowOnSpark/prediction")
+  parser.add_argument("--output", help="HDFS path to save predictions", type=str, default=ATKH_mem_used_output_path)
   parser.add_argument("--tensorboard", help="launch tensorboard process", action="store_true",default=True)
   args = parser.parse_args()
   print("args:", args)
 
   mem_data = spark.read.csv(ATKH_mem_used_csv_path,inferSchema=True, header=True)
-  mem_data = mem_data.head(3600)
+  mem_data = mem_data.head(480)
   mem_data = spark.createDataFrame(mem_data)
   mem_data.show(60)
 
@@ -88,9 +92,17 @@ if __name__ == '__main__':
   preds.show()
   
   
+  
   output_dir = datetime.datetime.now().strftime('%Y%m%d%H%M%S-prediction')
   tf.io.gfile.makedirs(ATKH_mem_used_output_path+"/"+output_dir)
-  preds.write.json(ATKH_mem_used_output_path+"/"+output_dir,mode='append')
+  print("=======output_path : "+ATKH_mem_used_output_path+"/"+output_dir)
+  preds.write.json(ATKH_mem_used_output_path+"/"+output_dir)
+  result_json = spark.read.json(ATKH_mem_used_output_path+"/"+output_dir+"/*.json")
+  result_json.show()
+  #preds.write.json("predictions_res")
+  #preds.write.json()
+
+  #preds.write.format('json').save(ATKH_mem_used_output_path+"/"+output_dir)
 
  
 
