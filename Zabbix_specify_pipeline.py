@@ -7,7 +7,7 @@ It provides a TFEstimator class to fit a TFModel using TensorFlow.  The TFEstima
 to conduct distributed training, but due to architectural limitations, the TFModel will only run single-node TensorFlow instances
 when inferencing on the executors.  The executors will run in parallel, so the TensorFlow model must fit in the memory
 of each executor.
-
+hello test!!
 
 """
 
@@ -470,6 +470,7 @@ class TFModel(Model, TFParams,
     """
     from datetime import datetime as dt
     from datetime import timedelta
+    import time
     spark = SparkSession.builder.getOrCreate()
 
     # set a deterministic order for input/output columns (lexicographic by key)
@@ -496,6 +497,7 @@ class TFModel(Model, TFParams,
     #DATETIME = date_rdd_out[0][0]+"_"+date_rdd_out[0][1]
     #print("=======DATETIME : {}".format(DATETIME))
     #print("=========RDD_O : {}".format())
+    start = time.process_time()
     _run_model = _run_model_tf1 if version.parse(TF_VERSION) < version.parse("2.0.0") else _run_model_tf2
     rdd_out = dataset.select(input_cols).rdd.mapPartitions(lambda it: _run_model(it, local_args, tf_args))
     #print("Dataframe\n")
@@ -504,6 +506,9 @@ class TFModel(Model, TFParams,
     rows_out = rdd_out.map(lambda x: Row(*x))
     
     #print("rows_out : {}".format(type(rows_out)))
+    end = time.process_time()
+    TF_transform_time = end-start
+    print("\n=============Workers_proccess_time : {}\n".format(TF_transform_time))
     return spark.createDataFrame(rows_out, output_cols)
 
 
@@ -632,7 +637,7 @@ def _run_model_tf2(iterator, args, tf_args):
   
   # feed data in batches and return output tensors
   for tensors in yield_batch(iterator, args.batch_size, len(input_tensor_names)):
-    print("======tensor_shape : {}".format(tensors))
+    
     inputs = {}
     #print("iterator : {}".format(iterator))
     for i in range(len(input_tensor_names)):
@@ -646,18 +651,27 @@ def _run_model_tf2(iterator, args, tf_args):
       # and since saved_models don't encode tf.data operations
       expected_shape = list(t.shape)
       expected_shape[0] = tensor.shape[0]
-      print("========tensor_shape : {}".format(tensor.shape))
+      
+      
       tensor = tf.reshape(tensor, [-1,1])
+
+      #check if shape error
+      #expected_shape[0] = tensor.shape[0]
+      
+
       data_scaler = RobustScaler()
       tensor = data_scaler.fit_transform(tensor)
       tensor = tf.cast(tensor, tf.float32)
-      
+      if tensor.shape[0] != 60:
+        tensor = tf.reshape(tmp_tensor, [60,1])
+      print("=======tensor shape before reshape : {}".format(tensor))
       tensor = tf.reshape(tensor, [-1,60,1])
      
       
       
         
       inputs[name] = tensor
+      tmp_tensor = tensor
       #print("=====input : {}".format(inputs))
 
     predictions = pred_fn(**inputs)
